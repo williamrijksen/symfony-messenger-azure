@@ -1,0 +1,59 @@
+{
+    "name": "williamrijksen/symfony-messenger-azure",
+    "description": "Azure adapter for symfony/messenger component",
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "authors": [
+        {
+            "name": "William Rijksen",
+            "email": "william@enrise.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "WilliamRijksen\\AzureMessengerAdapter\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "WilliamRijksen\\AzureMessengerAdapter\\Tests\\": "tests"
+        }
+    },
+    "require": {
+        "php": ">=7.1.0",
+        "microsoft/windowsazure": "^0.5",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.1@dev",
+        "symfony/messenger": "^4.0@dev",
+        "symfony/dependency-injection": "^4.1@dev",
+        "symfony/http-kernel": "^4.1@dev",
+        "symfony/config": "^4.1@dev",
+        "symfony/serializer": "^4.1@dev",
+        "symfony/property-access": "^4.1@dev",
+        "phpstan/phpstan": "^0.11.0@dev",
+        "jakub-onderka/php-parallel-lint": "dev-master",
+        "sebastian/phpcpd": "^4.0@dev",
+        "friendsofphp/php-cs-fixer": "^2.14@dev"
+    },
+    "suggest": {
+        "ext-pcntl": "*"
+    },
+    "scripts": {
+        "test": [
+            "@composer unit-test"
+        ],
+        "unit-test": "./vendor/bin/phpunit tests --colors=always",
+        "lint": [
+            "vendor/bin/parallel-lint --exclude app --exclude vendor src tests",
+            "vendor/bin/php-cs-fixer fix --verbose --diff --dry-run --allow-risky=yes"
+        ],
+        "analyse": [
+            "vendor/bin/phpstan analyse -l 7 src",
+            "vendor/bin/phpcpd src/ tests/ --exclude vendor/"
+        ],
+        "fix": "vendor/bin/php-cs-fixer fix --verbose --diff --allow-risky=yes"
+    }
+}
