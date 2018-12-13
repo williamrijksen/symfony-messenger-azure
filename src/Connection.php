@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WilliamRijksen\AzureMessengerAdapter;
 
+use Psr\SimpleCache\CacheInterface;
 use WilliamRijksen\AzureMessengerAdapter\Exception\AzureMessengerException;
 use WindowsAzure\Common\ServiceException;
 use WindowsAzure\ServiceBus\Internal\IServiceBus;
@@ -24,10 +25,16 @@ class Connection
      */
     private $subscriptionName;
 
-    public function __construct(IServiceBus $serviceBus, string $subscriptionName = 'AllMessages')
+    /**
+     * @var CacheInterface|null
+     */
+    private $cache;
+
+    public function __construct(IServiceBus $serviceBus, string $subscriptionName = 'AllMessages', ?CacheInterface $cache = null)
     {
         $this->serviceBus = $serviceBus;
         $this->subscriptionName = $subscriptionName;
+        $this->cache = $cache;
     }
 
     public function publish(string $topicName, array $message): void
@@ -52,11 +59,18 @@ class Connection
     private function createTopic(string $topicName): void
     {
         if ($this->checkTopicExists($topicName)) {
+            if ($this->cache) {
+                $this->cache->set('topic_'.$topicName, true, 3600);
+            }
+
             return;
         }
 
         try {
             $this->serviceBus->createTopic(new TopicInfo($topicName));
+            if ($this->cache) {
+                $this->cache->set('topic_'.$topicName, true, 3600);
+            }
         } catch (ServiceException $e) {
             throw AzureMessengerException::whenCreatingTopic($topicName, $e);
         }
@@ -64,6 +78,10 @@ class Connection
 
     private function checkTopicExists(string $topicName): bool
     {
+        if ($this->cache && true === $this->cache->get('topic_'.$topicName)) {
+            return true;
+        }
+
         try {
             $topics = $this->serviceBus->listTopics();
         } catch (ServiceException $e) {
@@ -96,11 +114,20 @@ class Connection
     private function createSubscription(string $topicName): void
     {
         if ($this->checkSubscriptionExists($topicName)) {
+            if ($this->cache) {
+                $this->cache->set('subscription_'.$topicName.'_'.$this->subscriptionName, true, 3600);
+            }
+
             return;
         }
 
         try {
+            // topic required for subscriptions
+            $this->createTopic($topicName);
             $this->serviceBus->createSubscription($topicName, new SubscriptionInfo($this->subscriptionName));
+            if ($this->cache) {
+                $this->cache->set('subscription_'.$topicName.'_'.$this->subscriptionName, true, 3600);
+            }
         } catch (ServiceException $e) {
             throw AzureMessengerException::whenCreatingSubscription($topicName, $this->subscriptionName, $e);
         }
@@ -108,6 +135,10 @@ class Connection
 
     private function checkSubscriptionExists(string $topicName): bool
     {
+        if ($this->cache && true === $this->cache->get('subscription_'.$topicName.'_'.$this->subscriptionName)) {
+            return true;
+        }
+
         try {
             $subscriptions = $this->serviceBus->listSubscriptions($topicName);
         } catch (ServiceException $e) {

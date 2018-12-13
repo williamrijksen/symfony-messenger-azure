@@ -36,7 +36,9 @@ final class AzureMessengerAdapterExtension extends Extension
         $connectionDefinition = new Definition(Connection::class, [
             $serviceBusDefinition,
             $config['azure']['subscriptionName'],
+            $config['cache'] ? new Definition(new Reference($config['cache'])) : null,
         ]);
+
         $container->setDefinitions([
             Connection::class => $connectionDefinition,
             'azure_messenger.servicebus_builder' => $serviceBusBuilderDefinition,

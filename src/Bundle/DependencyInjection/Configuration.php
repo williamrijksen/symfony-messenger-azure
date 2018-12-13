@@ -47,6 +47,10 @@ final class Configuration implements ConfigurationInterface
                     ->end()
                 ->end()
             ->end()
+            ->scalarNode('cache')
+                ->defaultNull()
+                ->info('When the cache service is defined, it is possible to cache the subscription and topic exists checks')
+            ->end()
         ->end();
 
         return $treeBuilder;
